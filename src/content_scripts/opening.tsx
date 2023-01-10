@@ -1,4 +1,4 @@
-import {OpeningBalance} from "../background";
+import {OpeningBalance} from "../background/firefly_export";
 
 // TODO: You will need to update manifest.json so this file will be loaded on
 //  the correct URL.
