@@ -12,7 +12,7 @@ import {runOnURLMatch} from "../common/buttons";
 //  the correct URL.
 
 async function scrapeAccountsFromPage(): Promise<AccountStore[]> {
-    return getAccountElements().map(element => {
+    const accounts = getAccountElements().map(element => {
         const accountNumber = getAccountNumber(element)
         const accountName = getAccountName(element);
         // TODO: Double-check these values. You may need to update them based
@@ -28,6 +28,15 @@ async function scrapeAccountsFromPage(): Promise<AccountStore[]> {
         };
         return as;
     });
+    chrome.runtime.sendMessage(
+        {
+            action: "store_accounts",
+            value: accounts,
+        },
+        () => {
+        }
+    );
+    return accounts;
 }
 
 const buttonId = 'firefly-iii-export-accounts-button';
@@ -36,17 +45,7 @@ function addButton() {
     const button = document.createElement("button");
     button.id = buttonId;
     button.textContent = "Export Accounts"
-    button.addEventListener("click", () => {
-        const accounts = scrapeAccountsFromPage();
-        chrome.runtime.sendMessage(
-            {
-                action: "store_accounts",
-                value: accounts,
-            },
-            () => {
-            }
-        );
-    }, false);
+    button.addEventListener("click", () => scrapeAccountsFromPage(), false);
     document.body.append(button);
 }
 
