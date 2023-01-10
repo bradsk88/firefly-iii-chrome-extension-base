@@ -11,7 +11,7 @@ function addLocationObserver(callback: () => void) {
 
 let lastUrl: string;
 
-export function addButtonOnURLMatch(
+export function runOnURLMatch(
     urlPath: string,
     checkButtonExists: () => boolean,
     addButton: () => void,

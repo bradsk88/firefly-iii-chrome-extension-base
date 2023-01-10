@@ -17,6 +17,10 @@
   "content_scripts": [
     {
       "matches": ["https://*.example.com/*"],
+      "js": ["./dist/auto.js"]
+    },
+    {
+      "matches": ["https://*.example.com/*"],
       "js": ["./dist/accounts.js"]
     },
     {

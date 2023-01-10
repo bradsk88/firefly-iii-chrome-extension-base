@@ -1,43 +1,27 @@
 import {TransactionStore} from "firefly-iii-typescript-sdk-fetch";
 import {AccountRead} from "firefly-iii-typescript-sdk-fetch/dist/models/AccountRead";
-import {addButtonOnURLMatch} from "../common/buttons";
+import {runOnURLMatch} from "../common/buttons";
+import {AutoRunState} from "../background/auto_state";
+import {getCurrentPageAccount, scrapeTransactionsFromPage} from "./scrape/transactions";
+import {PageAccount} from "../common/accounts";
 
 // TODO: You will need to update manifest.json so this file will be loaded on
 //  the correct URL.
 
-
-export interface PageAccount {
-    id: string;
-    name: string;
+interface TransactionScrape {
+    pageAccount: PageAccount;
+    pageTransactions: TransactionStore[];
 }
 
-/**
- * @param accounts The first page of account in your Firefly III instance
- */
-async function getCurrentPageAccount(
-    accounts: AccountRead[],
-): Promise<PageAccount> {
-    // TODO: Find either the account number or account name on the page.
-    const accountNumber = "<implement this>";
-    // Use that to find the Firefly III account ID from the provided list.
-    let acct = accounts.find(
-        acct => acct.attributes.accountNumber === accountNumber,
-    )!;
+async function doScrape(): Promise<TransactionScrape> {
+    const accounts = await chrome.runtime.sendMessage({
+        action: "list_accounts",
+    });
+    const id = await getCurrentPageAccount(accounts);
     return {
-        id: acct.id,
-        name: acct.attributes.name,
+        pageAccount: id,
+        pageTransactions: scrapeTransactionsFromPage(id.id),
     };
-}
-
-/**
- * @param pageAccountId The Firefly III account ID for the current page
- */
-function scrapeTransactionsFromPage(
-    pageAccountId: string,
-): TransactionStore[] {
-    // TODO: This is where you implement the scraper to pull the individual
-    //  transactions from the page
-    return [];
 }
 
 const buttonId = 'firefly-iii-export-transactions-button';
@@ -48,29 +32,44 @@ function addButton() {
     const button = document.createElement("button");
     button.textContent = "Export Transactions"
     button.addEventListener("click", async () => {
-        const accounts = await chrome.runtime.sendMessage({
-            action: "list_accounts",
-        });
-        const id = await getCurrentPageAccount(accounts);
-        const transactions = scrapeTransactionsFromPage(id.id);
-        chrome.runtime.sendMessage(
-            {
-                action: "store_transactions",
-                value: transactions,
-            },
-            () => {
-            }
-        );
+        doScrape()
+            .then(transactions => {
+                chrome.runtime.sendMessage({
+                        action: "store_transactions",
+                        value: transactions,
+                    },
+                    () => {
+                    });
+            });
     }, false);
 
 
     document.body.append(button);
 }
 
+function enableAutoRun() {
+    chrome.runtime.sendMessage({
+        action: "get_auto_run_state",
+    }).then(state => {
+        if (state === AutoRunState.Transactions) {
+            doScrape()
+                .then((id: TransactionScrape) => chrome.runtime.sendMessage({
+                    action: "increment_auto_run_tx_account",
+                    lastAccountNameCompleted: id.pageAccount.name,
+                }, () => {
+                }))
+                .then(() => window.close());
+        }
+    });
+}
+
 // If your manifest.json allows your content script to run on multiple pages,
 // you can call this function more than once, or set the urlPath to "".
-addButtonOnURLMatch(
-    'accounts/main/details',
+runOnURLMatch(
+    'accounts/main/details', // TODO: Set this to your transactions page URL
     () => !!document.getElementById(buttonId),
-    () => addButton(),
+    () => {
+        addButton();
+        enableAutoRun();
+    },
 )

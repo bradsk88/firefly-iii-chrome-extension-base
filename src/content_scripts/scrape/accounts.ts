@@ -1,0 +1,32 @@
+import {sha512} from "js-sha512";
+
+export function getAccountElements(): HTMLElement[] {
+    // TODO: You'll almost certainly need to replace this with your own logic.
+    //  This is grabbing the "rows" of accounts from the page.
+    const forms = document.querySelectorAll('form[action="/Transactions/History"]');
+    return Array.from(forms.values()).map(v => v.getElementsByTagName("button")[0]);
+}
+
+export function getAccountNumber(
+    accountElement: HTMLElement,
+): string {
+    // TODO: You'll almost certainly need to replace this with your own logic.
+    //  This is grabbing the BANK'S account number from the row (not Firefly's
+    //  account ID).
+    const input = accountElement.getElementsByTagName("input")[0];
+    const accountNumber = input.attributes.getNamedItem('value')!.value;
+    // If the account numbers on the page are long, SHA512 will make them a
+    // consistent and acceptable length.
+    // return sha512(accountNumber);
+    return accountNumber;
+}
+
+export function getAccountName(
+    accountElement: HTMLElement,
+): string {
+    // TODO: You'll almost certainly need to replace this with your own logic.
+    //  This is grabbing the account name from the row.
+    return accountElement.attributes
+        .getNamedItem('aria-label')!.value
+        .split('Transaction History for ')[1];
+}
