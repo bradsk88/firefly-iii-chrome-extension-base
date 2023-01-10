@@ -12,7 +12,8 @@ export async function progressAutoRun(state = AutoRunState.Accounts) {
         return;
     }
     openedWindow = await chrome.tabs.create({
-        url: 'https://personal.affinitycu.ca/Accounts/Summary'
+        url: 'https://personal.affinitycu.ca/Accounts/Summary',
+        active: false,
     })
 }
 
@@ -38,7 +39,8 @@ export function progressAutoTx(lastAccountName: string) {
     setAutoRunLastTx(lastAccountName)
         .then(() => openedWindow ? chrome.tabs.remove(openedWindow.id!) : undefined)
         .then(() => chrome.tabs.create({
-            url: 'https://personal.affinitycu.ca/Accounts/Summary'
+            url: 'https://personal.affinitycu.ca/Accounts/Summary',
+            active: false,
         }))
         .then(tab => openedWindow = tab);
 }
