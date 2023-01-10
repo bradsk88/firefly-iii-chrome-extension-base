@@ -1,5 +1,4 @@
 import {TransactionStore} from "firefly-iii-typescript-sdk-fetch";
-import {AccountRead} from "firefly-iii-typescript-sdk-fetch/dist/models/AccountRead";
 import {runOnURLMatch} from "../common/buttons";
 import {AutoRunState} from "../background/auto_state";
 import {getCurrentPageAccount, scrapeTransactionsFromPage} from "./scrape/transactions";
@@ -18,9 +17,16 @@ async function doScrape(): Promise<TransactionScrape> {
         action: "list_accounts",
     });
     const id = await getCurrentPageAccount(accounts);
+    const txs = await scrapeTransactionsFromPage(id.id);
+    chrome.runtime.sendMessage({
+            action: "store_transactions",
+            value: txs,
+        },
+        () => {
+        });
     return {
         pageAccount: id,
-        pageTransactions: scrapeTransactionsFromPage(id.id),
+        pageTransactions: txs,
     };
 }
 
@@ -31,19 +37,9 @@ function addButton() {
     //  account's transactions are listed.
     const button = document.createElement("button");
     button.textContent = "Export Transactions"
-    button.addEventListener("click", async () => {
-        doScrape()
-            .then(transactions => {
-                chrome.runtime.sendMessage({
-                        action: "store_transactions",
-                        value: transactions,
-                    },
-                    () => {
-                    });
-            });
-    }, false);
-
-
+    button.addEventListener("click", async () => doScrape(), false);
+    // TODO: Try to steal styling from the page to make this look good :)
+    button.classList.add("some", "classes", "from", "the", "page");
     document.body.append(button);
 }
 
@@ -57,8 +53,7 @@ function enableAutoRun() {
                     action: "increment_auto_run_tx_account",
                     lastAccountNameCompleted: id.pageAccount.name,
                 }, () => {
-                }))
-                .then(() => window.close());
+                }));
         }
     });
 }
