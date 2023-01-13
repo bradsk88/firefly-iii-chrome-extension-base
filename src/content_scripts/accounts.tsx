@@ -4,30 +4,45 @@ import {
     ShortAccountTypeProperty
 } from "firefly-iii-typescript-sdk-fetch/dist/models";
 import {AutoRunState} from "../background/auto_state";
-import {getAccountElements, getAccountName, getAccountNumber} from "./scrape/accounts";
+import {getAccountElements, getAccountName, getAccountNumber, getOpeningBalance} from "./scrape/accounts";
 import {openAccountForAutoRun} from "./auto_run/accounts";
 import {runOnURLMatch} from "../common/buttons";
+import {runOnContentChange} from "../common/autorun";
 
 // TODO: You will need to update manifest.json so this file will be loaded on
 //  the correct URL.
 
+let pageAlreadyScraped = false;
+
 async function scrapeAccountsFromPage(): Promise<AccountStore[]> {
+    if (pageAlreadyScraped) {
+        throw new Error("Already scraped. Stopping.");
+    }
+
     const accounts = getAccountElements().map(element => {
         const accountNumber = getAccountNumber(element)
         const accountName = getAccountName(element);
+        const openingBalance = getOpeningBalance(element);
         // TODO: Double-check these values. You may need to update them based
         //  on the account element or bank.
+        let openingBalanceBalance: string | undefined;
+        if (openingBalance) {
+            openingBalanceBalance = `-${openingBalance.balance}`;
+        }
         const as: AccountStore = {
             // iban: "12345", // Not all banks have an IBAN
             // bic: "123", // Not all banks have an BIC
             name: accountName,
             accountNumber: accountNumber,
+            openingBalance: openingBalanceBalance,
+            openingBalanceDate: openingBalance?.date,
             type: ShortAccountTypeProperty.Asset,
             accountRole: AccountRoleProperty.DefaultAsset,
             currencyCode: "CAD",
         };
         return as;
     });
+    pageAlreadyScraped = true;
     chrome.runtime.sendMessage(
         {
             action: "store_accounts",
@@ -71,6 +86,12 @@ runOnURLMatch(
     'accounts/main/details', // TODO: Set this to your accounts page URL
     () => !!document.getElementById(buttonId),
     () => {
+        pageAlreadyScraped = false;
         addButton();
-        enableAutoRun();
-    });
+    },
+);
+
+runOnContentChange(
+    'accounts/main/details', // TODO: Set this to your accounts page URL
+    enableAutoRun,
+)

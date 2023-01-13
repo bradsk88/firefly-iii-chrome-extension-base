@@ -1,4 +1,5 @@
 import {sha512} from "js-sha512";
+import {OpeningBalance} from "../../background/firefly_export";
 
 export function getAccountElements(): Element[] {
     // TODO: You'll almost certainly need to replace this with your own logic.
@@ -29,4 +30,12 @@ export function getAccountName(
     return accountElement.attributes
         .getNamedItem('aria-label')!.value
         .split('Transaction History for ')[1];
+}
+
+export function getOpeningBalance(
+    accountElement: Element,
+): OpeningBalance | undefined {
+    // TODO: If you can confidently determine the opening balance, do that here.
+    //  When in doubt, return undefined.
+    return undefined;
 }

@@ -21,6 +21,18 @@ const backgroundLog = (string: string): void => {
     });
 }
 
+chrome.runtime.onConnectExternal.addListener(function (port) {
+    port.onMessage.addListener(function (msg) {
+        console.log('message', msg);
+        if (msg.action === "login") {
+            return chrome.storage.local.set({
+                "ffiii_bearer_token": msg.token,
+            }, () => {
+            });
+        }
+    });
+});
+
 function registerSelfWithHubExtension() {
     console.log('registering self');
     const port = chrome.runtime.connect(hubExtensionId);
@@ -71,17 +83,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             backgroundLog(`[error] ${error}`)
         })
     } else if (message.action === "store_accounts") {
-        patchDatesAccount(message.value).then(
-            accs => storeAccounts(accs),
-        ).catch((error) => {
-            backgroundLog(`[error] ${error}`)
+        getAutoRunState().then(state => {
+            if (state === AutoRunState.Done) {
+                return;
+            }
+            patchDatesAccount(message.value).then(
+                accs => storeAccounts(accs),
+            ).catch((error) => {
+                backgroundLog(`[error] ${error}`)
+            });
         });
     } else if (message.action === "store_transactions") {
-        patchDatesAndAvoidDupes(message.value).then(
-            txStore => storeTransactions(txStore),
-        ).catch((error) => {
-            backgroundLog(`[error] ${error}`)
-        });
+        getAutoRunState().then(state => {
+            if (state === AutoRunState.Done) {
+                return;
+            }
+            patchDatesAndAvoidDupes(message.value).then(
+                txStore => storeTransactions(txStore),
+            ).catch((error) => {
+                backgroundLog(`[error] ${error}`)
+            });
+        })
     } else if (message.action === "store_opening") {
         patchDatesOB(message.value).then(
             obStore => storeOpeningBalance(obStore),

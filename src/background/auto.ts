@@ -2,20 +2,23 @@ import {AutoRunState} from "./auto_state";
 import Tab = chrome.tabs.Tab;
 import {autoRunStartURL} from "../extensionid";
 
-let openedWindow: Tab;
+let openedWindow: Tab | undefined;
 
 export async function progressAutoRun(state = AutoRunState.Accounts) {
     await setAutoRunState(state)
-    if (openedWindow) {
-        chrome.tabs.remove(openedWindow.id!)
-    }
     if (state === AutoRunState.Done) {
+        if (!!openedWindow) {
+            openedWindow = undefined;
+            return chrome.tabs.remove(openedWindow!.id!);
+        }
         return;
     }
-    openedWindow = await chrome.tabs.create({
-        url: autoRunStartURL,
-        active: false,
-    })
+    if (!openedWindow) {
+        openedWindow = await chrome.tabs.create({
+            url: autoRunStartURL,
+            active: false,
+        });
+    }
 }
 
 async function setAutoRunState(s: AutoRunState): Promise<void> {

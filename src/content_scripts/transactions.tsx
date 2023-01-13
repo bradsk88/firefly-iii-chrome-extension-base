@@ -3,6 +3,7 @@ import {runOnURLMatch} from "../common/buttons";
 import {AutoRunState} from "../background/auto_state";
 import {getCurrentPageAccount, scrapeTransactionsFromPage} from "./scrape/transactions";
 import {PageAccount} from "../common/accounts";
+import {runOnContentChange} from "../common/autorun";
 
 // TODO: You will need to update manifest.json so this file will be loaded on
 //  the correct URL.
@@ -12,13 +13,20 @@ interface TransactionScrape {
     pageTransactions: TransactionStore[];
 }
 
+let pageAlreadyScraped = false;
+
 async function doScrape(): Promise<TransactionScrape> {
+    if (pageAlreadyScraped) {
+        throw new Error("Already scraped. Stopping.");
+    }
+
     const accounts = await chrome.runtime.sendMessage({
         action: "list_accounts",
     });
     const id = await getCurrentPageAccount(accounts);
     const txs = await scrapeTransactionsFromPage(id.id);
-    chrome.runtime.sendMessage({
+    pageAlreadyScraped = true;
+    await chrome.runtime.sendMessage({
             action: "store_transactions",
             value: txs,
         },
@@ -64,7 +72,12 @@ runOnURLMatch(
     'accounts/main/details', // TODO: Set this to your transactions page URL
     () => !!document.getElementById(buttonId),
     () => {
+        pageAlreadyScraped = false;
         addButton();
-        enableAutoRun();
     },
+)
+
+runOnContentChange(
+    'accounts/main/details', // TODO: Set this to your transactions page URL
+    enableAutoRun,
 )
