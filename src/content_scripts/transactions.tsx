@@ -24,7 +24,7 @@ async function doScrape(): Promise<TransactionScrape> {
         action: "list_accounts",
     });
     const id = await getCurrentPageAccount(accounts);
-    const txs = await scrapeTransactionsFromPage(id.id);
+    const txs = scrapeTransactionsFromPage(id.id);
     pageAlreadyScraped = true;
     await chrome.runtime.sendMessage({
             action: "store_transactions",
