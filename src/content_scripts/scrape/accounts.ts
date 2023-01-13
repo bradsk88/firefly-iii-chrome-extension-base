@@ -1,6 +1,6 @@
 import {sha512} from "js-sha512";
 
-export function getAccountElements(): HTMLElement[] {
+export function getAccountElements(): Element[] {
     // TODO: You'll almost certainly need to replace this with your own logic.
     //  This is grabbing the "rows" of accounts from the page.
     const forms = document.querySelectorAll('form[action="/Transactions/History"]');
@@ -8,7 +8,7 @@ export function getAccountElements(): HTMLElement[] {
 }
 
 export function getAccountNumber(
-    accountElement: HTMLElement,
+    accountElement: Element,
 ): string {
     // TODO: You'll almost certainly need to replace this with your own logic.
     //  This is grabbing the BANK'S account number from the row (not Firefly's
@@ -22,7 +22,7 @@ export function getAccountNumber(
 }
 
 export function getAccountName(
-    accountElement: HTMLElement,
+    accountElement: Element,
 ): string {
     // TODO: You'll almost certainly need to replace this with your own logic.
     //  This is grabbing the account name from the row.
