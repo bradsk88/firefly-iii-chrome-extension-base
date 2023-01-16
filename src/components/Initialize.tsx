@@ -44,7 +44,7 @@ const Initialize = () => {
                                 setState(InitState.Complete);
                             }
                         })
-                    }}></button>
+                    }}>Grant Permissions</button>
                 </>
             }
             {state === InitState.Complete &&
