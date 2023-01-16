@@ -78,6 +78,12 @@ export function getBearerToken(): Promise<string> {
     });
 }
 
+export function getApiBaseUrl(): Promise<string> {
+    return chrome.storage.local.get(["ffiii_api_base_url"]).then(r => {
+        return r.ffiii_api_base_url;
+    });
+}
+
 const publicClientTokenRequest = async (tokenEndpoint: string, body: URLSearchParams) => {
     // backgroundLog(`token request body for public client: ${body}`)
     const data = await fetch(tokenEndpoint, {

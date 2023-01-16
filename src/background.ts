@@ -2,7 +2,7 @@ import {TransactionStore} from "firefly-iii-typescript-sdk-fetch";
 import {AccountStore} from "firefly-iii-typescript-sdk-fetch/dist/models";
 import {AccountRead} from "firefly-iii-typescript-sdk-fetch/dist/models/AccountRead";
 import {AutoRunState} from "./background/auto_state";
-import {doOauth, getBearerToken} from "./background/oauth";
+import {doOauth, getBearerToken, getApiBaseUrl} from "./background/oauth";
 import {
     doListAccounts,
     doStoreAccounts,
@@ -27,10 +27,8 @@ chrome.runtime.onConnectExternal.addListener(function (port) {
         if (msg.action === "login") {
             return chrome.storage.local.set({
                 "ffiii_bearer_token": msg.token,
+                "ffiii_api_base_url": msg.api_base_url,
             }, () => {
-                chrome.permissions.request({
-                    origins: [msg.api_base_url],
-                })
             });
         }
     });
@@ -127,6 +125,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else if (message.state === AutoRunState.Transactions) {
             progressAutoRun(AutoRunState.Done);
         }
+    } else if (message.action === "check_base_url") {
+        getApiBaseUrl().then(url => sendResponse(url));
     } else {
         backgroundLog(`[UNRECOGNIZED ACTION] ${message.action}`);
         return false;

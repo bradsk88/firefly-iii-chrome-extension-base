@@ -30,5 +30,8 @@
       "js": ["./dist/opening.js"]
     }
   ],
+  "action": {
+    "default_popup": "options.html"
+  },
   "manifest_version": 3
 }

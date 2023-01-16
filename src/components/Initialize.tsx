@@ -1,63 +1,57 @@
 import * as React from 'react'
-import { useRef, useState, useEffect } from 'react';
-import AuthForm from './AuthForm';
+import {useState} from 'react'
 
-type Props = {}
+enum InitState {
+    Loading = "loading",
+    NeedPerms = "needperms",
+    Complete = "complete",
+}
 
-const Initialize = (props: Props) => {
-  const redirectUri = `https://${chrome.runtime.id}.chromiumapp.org/`
+const Initialize = () => {
+    const [baseUrl, setBaseUrl] = useState<string>("")
+    const [state, setState] = useState<InitState>(InitState.Loading)
 
-  const [baseURL, setBaseURL] = useState<string>("")
-  const [log, setLog] = useState<string>("")
-  const [result, setResult] = useState<string>("")
-  const logRef = useRef<HTMLTextAreaElement>(null)
+    chrome.runtime.sendMessage({
+        action: 'check_base_url',
+    }).then(url => {
+        if (!!url) {
+            setBaseUrl(url);
+            chrome.permissions.contains({
+                origins: [`${url}/*`],
+            }, (hasPerm) => {
+                if (hasPerm) {
+                    setState(InitState.Complete);
+                } else {
+                    setState(InitState.NeedPerms);
+                }
+            })
+        }
+    })
 
-  useEffect(() => {
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      console.log(message);
-
-      if (message.action === "log") {
-        setLog((prev) => {
-          return prev + message.value + "\n";
-        });
-        logRef.current?.scrollTo(0, logRef.current.scrollHeight);
-      } else if (message.action === "result") {
-        setResult(message.value);
-      }
-
-      return true;
-    });
-
-    return () => {
-      chrome.runtime.onMessage.removeListener(() => {});
-    }
-  }, []);
-
-  return (
-    <>
-      <AuthForm
-        redirectUri={redirectUri}
-        onSubmit={(params) => {
-          setLog("");
-          setResult("");
-
-          chrome.runtime.sendMessage(
-            {
-              action: "submit",
-              value: params,
-            },
-            () => {}
-          );
-        }}
-      />
-      <br />
-      <br />
-      <div>log</div>
-      <textarea id="log" cols={60} rows={10} value={log} ref={logRef} />
-      <div>result</div>
-      <textarea id="result" cols={60} rows={4} value={result} />
-    </>
-  );
+    return (
+        <>
+            {state === InitState.Loading &&
+                <div>Loading</div>
+            }
+            {state === InitState.NeedPerms &&
+                <>
+                    <div>We need some more permissions!</div>
+                    <button onClick={() => {
+                        chrome.permissions.request({
+                            origins: [`${baseUrl}/*`]
+                        }, (granted) => {
+                            if (granted) {
+                                setState(InitState.Complete);
+                            }
+                        })
+                    }}></button>
+                </>
+            }
+            {state === InitState.Complete &&
+                <div>Everything is set up!</div>
+            }
+        </>
+    );
 }
 
 export default Initialize
