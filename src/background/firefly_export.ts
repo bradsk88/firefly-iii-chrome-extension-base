@@ -24,7 +24,7 @@ export async function doListAccounts(
         }),
     );
     return api.listAccount({
-        // TODO: handle lots of accounts (multiple pages)
+        // TODO: [Base Project] Handle lots of accounts (multiple pages)
     }).then(
         (arr: AccountArray) => arr.data,
     );

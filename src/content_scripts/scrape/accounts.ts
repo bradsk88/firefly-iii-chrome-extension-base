@@ -1,6 +1,12 @@
 import {sha512} from "js-sha512";
 import {OpeningBalance} from "../../background/firefly_export";
 
+export function getButtonDestination(): Element {
+    // TODO: Find a DOM element on the page where the manual "export to firefly"
+    //  button should go.
+    return document.body;
+}
+
 export function getAccountElements(): Element[] {
     // TODO: You'll almost certainly need to replace this with your own logic.
     //  This is grabbing the "rows" of accounts from the page.

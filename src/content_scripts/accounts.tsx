@@ -4,7 +4,13 @@ import {
     ShortAccountTypeProperty
 } from "firefly-iii-typescript-sdk-fetch/dist/models";
 import {AutoRunState} from "../background/auto_state";
-import {getAccountElements, getAccountName, getAccountNumber, getOpeningBalance} from "./scrape/accounts";
+import {
+    getAccountElements,
+    getAccountName,
+    getAccountNumber,
+    getButtonDestination,
+    getOpeningBalance
+} from "./scrape/accounts";
 import {openAccountForAutoRun} from "./auto_run/accounts";
 import {runOnURLMatch} from "../common/buttons";
 import {runOnContentChange} from "../common/autorun";
@@ -61,7 +67,7 @@ function addButton() {
     button.id = buttonId;
     button.textContent = "Export Accounts"
     button.addEventListener("click", () => scrapeAccountsFromPage(), false);
-    document.body.append(button);
+    getButtonDestination().append(button);
 }
 
 function enableAutoRun() {

@@ -64,7 +64,7 @@ export async function doOauth(params: AuthInputParams): Promise<void> {
         }, () => {
         });
 
-        // TODO: Implement refresh flow
+        // TODO: [Base Project] Implement refresh flow
         return chrome.storage.local.set({
             "ffiii_bearer_token": response.access_token,
         }, () => {

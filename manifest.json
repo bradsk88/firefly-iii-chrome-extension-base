@@ -3,13 +3,11 @@
   "version": "1.0",
   "description": "Description goes here",
   "permissions": [
-    "identity",
-    "clipboardWrite",
     "storage"
   ],
-  "options_page": "options.html",
-  "host_permissions": [
-    "<all_urls>"
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "./dist/background.js"
@@ -32,6 +30,5 @@
       "js": ["./dist/opening.js"]
     }
   ],
-  "devtools_page": "devtools.html",
   "manifest_version": 3
 }

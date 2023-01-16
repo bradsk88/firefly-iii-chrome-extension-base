@@ -28,6 +28,9 @@ chrome.runtime.onConnectExternal.addListener(function (port) {
             return chrome.storage.local.set({
                 "ffiii_bearer_token": msg.token,
             }, () => {
+                chrome.permissions.request({
+                    origins: [msg.api_base_url],
+                })
             });
         }
     });
