@@ -3,7 +3,8 @@
   "version": "1.0",
   "description": "Description goes here",
   "permissions": [
-    "storage"
+    "storage",
+    "tabs"
   ],
   "optional_host_permissions": [
     "http://*/*",
