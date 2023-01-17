@@ -20,8 +20,8 @@ import {runOnContentChange} from "../common/autorun";
 
 let pageAlreadyScraped = false;
 
-async function scrapeAccountsFromPage(): Promise<AccountStore[]> {
-    if (pageAlreadyScraped) {
+async function scrapeAccountsFromPage(isAutoRun: boolean): Promise<AccountStore[]> {
+    if (isAutoRun && pageAlreadyScraped) {
         throw new Error("Already scraped. Stopping.");
     }
 
@@ -52,6 +52,7 @@ async function scrapeAccountsFromPage(): Promise<AccountStore[]> {
     chrome.runtime.sendMessage(
         {
             action: "store_accounts",
+            is_auto_run: isAutoRun,
             value: accounts,
         },
         () => {
@@ -66,7 +67,7 @@ function addButton() {
     const button = document.createElement("button");
     button.id = buttonId;
     button.textContent = "Export Accounts"
-    button.addEventListener("click", () => scrapeAccountsFromPage(), false);
+    button.addEventListener("click", () => scrapeAccountsFromPage(false), false);
     getButtonDestination().append(button);
 }
 
@@ -77,7 +78,7 @@ function enableAutoRun() {
         action: "get_auto_run_state",
     }).then(state => {
         if (state === AutoRunState.Accounts) {
-            scrapeAccountsFromPage()
+            scrapeAccountsFromPage(true)
                 .then(() => chrome.runtime.sendMessage({
                     action: "complete_auto_run_state",
                     state: AutoRunState.Accounts,

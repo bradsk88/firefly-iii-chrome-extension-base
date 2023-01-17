@@ -1,8 +1,8 @@
 import {TransactionStore} from "firefly-iii-typescript-sdk-fetch";
-import {runOnURLMatch} from "../common/buttons";
 import {AutoRunState} from "../background/auto_state";
 import {getCurrentPageAccount, scrapeTransactionsFromPage} from "./scrape/transactions";
 import {PageAccount} from "../common/accounts";
+import {runOnURLMatch} from "../common/buttons";
 import {runOnContentChange} from "../common/autorun";
 
 // TODO: You will need to update manifest.json so this file will be loaded on
@@ -15,8 +15,8 @@ interface TransactionScrape {
 
 let pageAlreadyScraped = false;
 
-async function doScrape(): Promise<TransactionScrape> {
-    if (pageAlreadyScraped) {
+async function doScrape(isAutoRun: boolean): Promise<TransactionScrape> {
+    if (isAutoRun && pageAlreadyScraped) {
         throw new Error("Already scraped. Stopping.");
     }
 
@@ -28,6 +28,7 @@ async function doScrape(): Promise<TransactionScrape> {
     pageAlreadyScraped = true;
     await chrome.runtime.sendMessage({
             action: "store_transactions",
+            is_auto_run: isAutoRun,
             value: txs,
         },
         () => {
@@ -45,7 +46,7 @@ function addButton() {
     //  account's transactions are listed.
     const button = document.createElement("button");
     button.textContent = "Export Transactions"
-    button.addEventListener("click", async () => doScrape(), false);
+    button.addEventListener("click", async () => doScrape(false), false);
     // TODO: Try to steal styling from the page to make this look good :)
     button.classList.add("some", "classes", "from", "the", "page");
     document.body.append(button);
@@ -56,7 +57,7 @@ function enableAutoRun() {
         action: "get_auto_run_state",
     }).then(state => {
         if (state === AutoRunState.Transactions) {
-            doScrape()
+            doScrape(true)
                 .then((id: TransactionScrape) => chrome.runtime.sendMessage({
                     action: "increment_auto_run_tx_account",
                     lastAccountNameCompleted: id.pageAccount.name,

@@ -1,6 +1,8 @@
 import {AutoRunState} from "./auto_state";
-import Tab = chrome.tabs.Tab;
 import {autoRunStartURL} from "../extensionid";
+import Tab = chrome.tabs.Tab;
+
+setAutoRunState(AutoRunState.Unstarted);
 
 let openedWindow: Tab | undefined;
 
