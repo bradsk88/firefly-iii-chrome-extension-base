@@ -33,23 +33,9 @@ const backgroundLog = (string: string): void => {
     });
 }
 
-chrome.runtime.onConnectExternal.addListener(function (port) {
-    port.onMessage.addListener(function (msg) {
-        console.log('message', msg);
-        if (msg.action === "login") {
-            return chrome.storage.local.set({
-                "ffiii_bearer_token": msg.token,
-                "ffiii_api_base_url": msg.api_base_url,
-            }, () => {
-            });
-        }
-    });
-});
-
 function registerSelfWithHubExtension() {
     console.log('registering self');
-    const port = chrome.runtime.connect(hubExtensionId);
-    port.postMessage({
+    chrome.runtime.sendMessage(hubExtensionId, {
         action: "register",
         extension: chrome.runtime.id,
         name: extensionBankName,
@@ -68,6 +54,13 @@ setTimeout(registerSelfWithHubExtension, 5000);
 
 chrome.runtime.onMessageExternal.addListener((msg: any, _: any, sendResponse: Function) => {
     console.log('message', msg);
+    if (msg.action === "login") {
+        return chrome.storage.local.set({
+            "ffiii_bearer_token": msg.token,
+            "ffiii_api_base_url": msg.api_base_url,
+        }, () => {
+        });
+    }
     if (msg.action === "request_auto_run") {
         chrome.permissions.getAll(async perms => {
             await setAutoRunState(AutoRunState.Accounts);
@@ -77,11 +70,13 @@ chrome.runtime.onMessageExternal.addListener((msg: any, _: any, sendResponse: Fu
                 chrome.runtime.openOptionsPage();
             }
         })
-    } else if (msg.action === 'cancel_auto_run') {
+    }
+    if (msg.action === 'cancel_auto_run') {
         chrome.permissions.getAll(async perms => {
             await setAutoRunState(AutoRunState.Unstarted);
         })
-    } else if (msg.action === 'get_auto_run_state') {
+    }
+    if (msg.action === 'get_auto_run_state') {
         getAutoRunState().then(state => sendResponse({
             state: state,
         }))
