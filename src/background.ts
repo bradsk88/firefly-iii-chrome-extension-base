@@ -66,21 +66,28 @@ chrome.runtime.onStartup.addListener(function () {
 setTimeout(registerSelfWithHubExtension, 1000);
 setTimeout(registerSelfWithHubExtension, 5000);
 
-chrome.runtime.onConnectExternal.addListener(function (port) {
-    port.onMessage.addListener(function (msg) {
-        console.log('message', msg);
-        if (msg.action === "request_auto_run") {
-            chrome.permissions.getAll(async perms => {
-                await setAutoRunState(AutoRunState.Accounts);
-                if ((perms.origins?.filter(o => !o.includes(bankDomain)) || []).length > 0) {
-                    await progressAutoRun();
-                } else {
-                    chrome.runtime.openOptionsPage();
-                }
-            })
-        }
-    });
-});
+chrome.runtime.onMessageExternal.addListener((msg: any, _: any, sendResponse: Function) => {
+    console.log('message', msg);
+    if (msg.action === "request_auto_run") {
+        chrome.permissions.getAll(async perms => {
+            await setAutoRunState(AutoRunState.Accounts);
+            if ((perms.origins?.filter(o => !o.includes(bankDomain)) || []).length > 0) {
+                await progressAutoRun();
+            } else {
+                chrome.runtime.openOptionsPage();
+            }
+        })
+    } else if (msg.action === 'cancel_auto_run') {
+        chrome.permissions.getAll(async perms => {
+            await setAutoRunState(AutoRunState.Unstarted);
+        })
+    } else if (msg.action === 'get_auto_run_state') {
+        getAutoRunState().then(state => sendResponse({
+            state: state,
+        }))
+    }
+})
+
 
 async function storeAccounts(data: AccountStore[]) {
     getBearerToken().then(token => doStoreAccounts(token, data))
