@@ -5,7 +5,7 @@ import {
     getCurrentPageAccount,
     getRowAmount,
     getRowDate, getRowDesc,
-    getRowElements
+    getRowElements, isPageReadyForScraping
 } from "./scrape/transactions";
 import {PageAccount} from "../common/accounts";
 import {runOnURLMatch} from "../common/buttons";
@@ -13,6 +13,7 @@ import {runOnContentChange} from "../common/autorun";
 import {AccountRead} from "firefly-iii-typescript-sdk-fetch/dist/models/AccountRead";
 import {isSingleAccountBank} from "../extensionid";
 import {backToAccountsPage} from "./auto_run/transactions";
+import {debugLog} from "./auto_run/debug";
 
 // TODO: You will need to update manifest.json so this file will be loaded on
 //  the correct URL.
@@ -32,15 +33,15 @@ export function scrapeTransactionsFromPage(
 ): TransactionStore[] {
     const rows = getRowElements();
     return rows.map(r => {
-        let tType = TransactionTypeProperty.Withdrawal;
-        let srcId: string | undefined = pageAccount.id;
-        let destId: string | undefined = undefined;
+        let tType = TransactionTypeProperty.Deposit;
+        let srcId: string | undefined = undefined;
+        let destId: string | undefined = pageAccount.id;
 
         const amount = getRowAmount(r);
         if (amount < 0) {
-            tType = TransactionTypeProperty.Deposit;
-            srcId = undefined;
-            destId = pageAccount.id;
+            tType = TransactionTypeProperty.Withdrawal;
+            srcId = pageAccount.id;
+            destId = undefined;
         }
 
         return {
@@ -104,9 +105,14 @@ function addButton() {
 }
 
 function enableAutoRun() {
+    if (!isPageReadyForScraping()) {
+        debugLog("Page is not ready for scraping")
+        return;
+    }
     chrome.runtime.sendMessage({
         action: "get_auto_run_state",
     }).then(state => {
+        debugLog("Got state", state)
         if (state === AutoRunState.Transactions) {
             doScrape(true)
                 .then((id: TransactionScrape) => {
@@ -144,4 +150,10 @@ runOnContentChange(
     getButtonDestination,
 )
 
-runOnContentChange(txPage, enableAutoRun);
+
+runOnContentChange(
+    txPage,
+    enableAutoRun,
+    () => document.querySelector('app-root')!,
+    'txAutoRun',
+);

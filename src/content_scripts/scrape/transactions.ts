@@ -22,6 +22,12 @@ export async function getCurrentPageAccount(
     )!;
 }
 
+export function isPageReadyForScraping(): boolean {
+    // TODO: Some banks load content slowly. Find an element on the page that
+    //  is only present once the page is fully loaded.
+    return !!document.querySelector('app-account-transactions')
+}
+
 export function getRowElements(): Element[] {
     // TODO: Find a list of DOM elements where each one represents a single
     //  transaction on the page. Example below.

@@ -1,5 +1,5 @@
 import {AutoRunState} from "./auto_state";
-import {autoRunStartURL} from "../extensionid";
+import {autoRunStartURL, debugAutoRun} from "../extensionid";
 import Tab = chrome.tabs.Tab;
 
 setAutoRunState(AutoRunState.Unstarted);
@@ -12,7 +12,12 @@ export async function progressAutoRun(state = AutoRunState.Accounts) {
         if (!!openedWindow) {
             const id = openedWindow.id;
             openedWindow = undefined;
-            return chrome.tabs.remove(id!);
+            if (debugAutoRun) {
+                console.log('the auto run would have closed the bank tab. But debug is enabled.')
+                return;
+            } else {
+                return chrome.tabs.remove(id!);
+            }
         }
         return;
     }

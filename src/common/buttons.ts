@@ -1,27 +1,40 @@
-function addLocationObserver(callback: () => void) {
-    // Options for the observer (which mutations to observe)
-    const config = {attributes: false, childList: true, subtree: false}
+class URLMatchRunner {
+    private lastURL = '';
 
-    // Create an observer instance linked to the callback function
-    const observer = new MutationObserver(callback)
+    constructor(
+        private readonly callback: (newURL: string) => void,
+    ) {
 
-    // Start observing the target node for configured mutations
-    observer.observe(document.body, config)
+    }
+
+    addLocationObserver(): void {
+        // Options for the observer (which mutations to observe)
+        const config = {attributes: false, childList: true, subtree: false}
+
+        // Create an observer instance linked to the callback function
+        const observer = new MutationObserver(() => {
+            const newURL = window.location.href.split('?')[0];
+            if (newURL == this.lastURL) {
+                return;
+            }
+            this.callback(newURL);
+            this.lastURL = newURL;
+        })
+
+        // Start observing the target node for configured mutations
+        observer.observe(document.body, config)
+    }
 }
-
-let lastUrl: string;
 
 export function runOnURLMatch(
     urlPath: string,
-    addButton: () => void,
+    func: () => void,
 ): void {
-    let callback = () => {
-        let curUrl = window.location.href.split('?')[0];
-        if (curUrl !== lastUrl && curUrl.endsWith(urlPath)) {
-            addButton();
-            lastUrl = curUrl;
+    let callback = (newURL: string) => {
+        if (newURL.endsWith(urlPath)) {
+            func();
         }
     };
-    addLocationObserver(callback);
-    callback();
+    new URLMatchRunner(callback).addLocationObserver();
+    callback(window.location.href);
 }
